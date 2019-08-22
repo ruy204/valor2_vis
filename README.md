@@ -1,1 +1,1 @@
-# valor2_vis
+# Visualization of SV results from VALOR2
