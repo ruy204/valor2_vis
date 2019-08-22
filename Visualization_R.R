@@ -68,9 +68,46 @@ chromosome_check<-function(chr,start_position,chunck_length,annotate="population
              background.panel="#FFFEDB", background.title="darkblue",groupAnnotation="group")
 }
 
+#2. check intra-chromosome events for specific chromosome/region
 
+intra_check<-function(chromosome,start,end,plot_type="loops"){
+  
+  #read-in bedpe data
+  bedpe<-read.delim("C:/PhD/Rotations/Rotation_1/data/SV2/bedpe/combine/jointdf.bedpe",header = F)
+  colnames(bedpe)<-c("chrom1","start1","end1","chrom2","start2","end2",
+                     "type","score","number1","number2","number3",
+                     "samples","Description")
+  bedpe[,c(2,3,5,6,8,9,10,11)]<-sapply(bedpe[,c(2,3,5,6,8,9,10,11)],function(x){as.numeric(as.character(x))})
+  bedpe$chrom1<-factor(bedpe$chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  bedpe$chrom2<-factor(bedpe$chrom2,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  bedpe$length1<-bedpe$end1-bedpe$start1
+  bedpe$length2<-bedpe$end2-bedpe$start2
+  
+  #chromosome preparation
+  df1=as.data.frame(cbind(paste("chr",c(1:22,"X","Y"),sep=""),rep(1,24),
+                          c(249250621,243199373,198022430,191154276,180915260,171115067,159138663,146364022,141213431,135534747,
+                            135006516,133851895,115169878,107349540,102531392,90354753,81195210,78077248,59128983,63025520,
+                            48129895,51304566,155270560,59373566)))
+  colnames(df1)<-c("Chrom1","start","end")
+  df1$Chrom1<-factor(df1$Chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  df1$end<-as.numeric(as.character(df1$end))
+  
+  chra = chromosome
+  sub<-bedpe %>% dplyr::filter(chrom1==chra & chrom2==chra) %>% dplyr::arrange(start1)
+  # sub<-bedpe %>% dplyr::filter(start1 %in% c(142685331,142690334))
+  pbpe = plotBedpe(sub,chrom = chra,chromstart = max(1,start),
+                   chromend=min(dplyr::filter(df1,Chrom1==chra)$end,end),
+                   heights = sub$score,bty='n',plottype=plot_type,offset=1,flip=F,
+                   colorby=as.numeric(as.factor(sub$type)),colorbycol=hcl.colors,
+                   border="black",lwd = 5)
+  labelgenome(chra, 1, dplyr::filter(df1,Chrom1==chra)$end,side=1,scipen=20,n=30,scale="Mb",line=.18,chromline=.5,scaleline=0.5)
+  legend("topright",inset =0.01,legend=levels(as.factor(sub$type)),col=hcl.colors(length(levels(as.factor(sub$type)))),pch=19,bty='n',text.font=2)
+  # legend("topright",inset =0.01,legend=levels(as.factor(sub$samples)),col=f("Set1")[1:length(levels(as.factor(sub$samples)))],pch=19,bty='n',text.font=2)
+  axis(side=2,las=2,tcl=.2)
+  
+}
 
-
+intra_check("chr22",15000000,30000000)
 
 
 
