@@ -8,6 +8,11 @@ library(RColorBrewer)
 library(GenomicRanges)
 library(Gviz)
 library(gridExtra)
+library(Sushi)
+library(BioCircos)
+
+# color extraction function
+f <- function(pal) brewer.pal(brewer.pal.info[pal, "maxcolors"], pal)
 
 #################
 #   Functions   #
@@ -109,19 +114,85 @@ intra_check<-function(chromosome,start,end,plot_type="loops"){
 
 intra_check("chr22",15000000,30000000)
 
+#3. inter-chromosome activities
 
+inter_check<-function(events){
+  
+  #read-in bedpe data
+  bedpe<-read.delim("C:/PhD/Rotations/Rotation_1/data/SV2/bedpe/combine/jointdf.bedpe",header = F)
+  colnames(bedpe)<-c("chrom1","start1","end1","chrom2","start2","end2",
+                     "type","score","number1","number2","number3",
+                     "samples","Description")
+  bedpe[,c(2,3,5,6,8,9,10,11)]<-sapply(bedpe[,c(2,3,5,6,8,9,10,11)],function(x){as.numeric(as.character(x))})
+  bedpe$chrom1<-factor(bedpe$chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  bedpe$chrom2<-factor(bedpe$chrom2,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  bedpe$length1<-bedpe$end1-bedpe$start1
+  bedpe$length2<-bedpe$end2-bedpe$start2
+  
+  sub<-bedpe %>% dplyr::filter(type %in% events)
+  links_chromosomes_1 = gsub("chr","",sub$chrom1)
+  links_chromosomes_2 = gsub("chr","",sub$chrom2)
+  links_pos_1 = sub$start1
+  links_pos_2 = sub$start2
+  links_labels = NA
+  
+  tracklist = BioCircosBackgroundTrack("myBackgroundTrack", minRadius = 0, maxRadius = 1,
+                                       borderSize = 0, fillColors = "#EEFFEE")  
+  
+  tracklist = tracklist + BioCircosLinkTrack('myLinkTrack', links_chromosomes_1, links_pos_1,
+                                             links_pos_1 , links_chromosomes_2, 
+                                             links_pos_2, links_pos_2 ,
+                                             maxRadius = 1, labels = links_labels)
+  
+  BioCircos(tracklist, genomeFillColor = "Paired",
+            chrPad = 0.02, displayGenomeBorder = F, yChr =  T,
+            genomeTicksDisplay = FALSE,  
+            genomeLabelTextSize = "10pt", genomeLabelDy = 0,zoom = T,
+            TEXTModuleDragEvent = TRUE)
+}
 
+inter_check("inverted-reciprocal")
 
+#4. number of samples for inter-chromosome activities
 
+inter_count<-function(events,resolution=1){
+  
+  #read-in bedpe data
+  bedpe<-read.delim("C:/PhD/Rotations/Rotation_1/data/SV2/bedpe/combine/jointdf.bedpe",header = F)
+  colnames(bedpe)<-c("Chrom1","start1","end1","Chrom2","start2","end2",
+                     "type","score","number1","number2","number3",
+                     "samples","Description")
+  bedpe[,c(2,3,5,6,8,9,10,11)]<-sapply(bedpe[,c(2,3,5,6,8,9,10,11)],function(x){as.numeric(as.character(x))})
+  bedpe$Chrom1<-factor(bedpe$Chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  bedpe$Chrom2<-factor(bedpe$Chrom2,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  bedpe$length1<-bedpe$end1-bedpe$start1
+  bedpe$length2<-bedpe$end2-bedpe$start2
+  
+  bedpe2<-bedpe
+  bedpe2[,c(2,5)]<-sapply(bedpe2[,c(2,5)],function(x){round(x/resolution)})
+  sv_hotspot1<-bedpe2 %>% group_by(Chrom1,start1,Chrom2,start2,type) %>% 
+    summarise(n_sample = n_distinct(samples)) %>% ungroup() %>% 
+    dplyr::arrange(Chrom1,start1)
+  a<-sv_hotspot1 %>% dplyr::filter(type %in% events)
+  a<-a %>% group_by(Chrom1,Chrom2) %>% summarise(sum_sample=sum(n_sample))
+  a$Chrom1<-factor(a$Chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  a$Chrom2<-factor(a$Chrom2,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  a1<-a %>% spread(Chrom2,sum_sample)
+  a2<-as.matrix(a1[,2:ncol(a1)])
+  rownames(a2)<-a1$Chrom1
+  length(union(rownames(a2),colnames(a2))) #17 chromosomes involved
+  allchr = union(rownames(a2),colnames(a2))
+  orderlist = c(paste("chr",sort(as.numeric(gsub("chr","",allchr[which(!allchr %in% c("chrX","chrY"))]))),sep=""),
+                allchr[which(allchr %in% c("chrX","chrY"))])
+  
+  f <- function(pal) brewer.pal(brewer.pal.info[pal, "maxcolors"], pal)
+  grid.col = c(f("Set1"),f("Paired")[1:(length(orderlist)-length(f("Set1")))]) #extract 9 colors for each strain 
+  names(grid.col)=orderlist
+  chordDiagram(a2,directional = TRUE,order = orderlist,transparency = 0.6, grid.col = grid.col)
+  
+}
 
-
-
-
-
-
-
-
-
+inter_count("inverted-reciprocal")
 
 
 
