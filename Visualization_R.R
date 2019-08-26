@@ -24,9 +24,8 @@ chromosome_check<-function(chr,start_position,chunck_length,annotate="population
   
   bedpe<-read.delim("C:/PhD/Rotations/Rotation_1/data/SV2/bedpe/combine/jointdf.bedpe",header = F)
   colnames(bedpe)<-c("chrom1","start1","end1","chrom2","start2","end2",
-                     "type","score","number1","number2","number3",
-                     "samples","Description")
-  bedpe[,c(2,3,5,6,8,9,10,11)]<-sapply(bedpe[,c(2,3,5,6,8,9,10,11)],function(x){as.numeric(as.character(x))})
+                     "type","score", "samples","Description")
+  bedpe[,c(2,3,5,6,8)]<-sapply(bedpe[,c(2,3,5,6,8)],function(x){as.numeric(as.character(x))})
   bedpe$chrom1<-factor(bedpe$chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
   bedpe$chrom2<-factor(bedpe$chrom2,levels=paste("chr",c(1:22,"X","Y"),sep=""))
   bedpe<-bedpe %>% dplyr::filter(type %in% types)
@@ -73,6 +72,8 @@ chromosome_check<-function(chr,start_position,chunck_length,annotate="population
              background.panel="#FFFEDB", background.title="darkblue",groupAnnotation="group")
 }
 
+chromosome_check("chr22",21000000,100000)
+
 #2. check intra-chromosome events for specific chromosome/region
 
 intra_check<-function(chromosome,start,end,plot_type="loops"){
@@ -80,9 +81,8 @@ intra_check<-function(chromosome,start,end,plot_type="loops"){
   #read-in bedpe data
   bedpe<-read.delim("C:/PhD/Rotations/Rotation_1/data/SV2/bedpe/combine/jointdf.bedpe",header = F)
   colnames(bedpe)<-c("chrom1","start1","end1","chrom2","start2","end2",
-                     "type","score","number1","number2","number3",
-                     "samples","Description")
-  bedpe[,c(2,3,5,6,8,9,10,11)]<-sapply(bedpe[,c(2,3,5,6,8,9,10,11)],function(x){as.numeric(as.character(x))})
+                     "type","score", "samples","Description")
+  bedpe[,c(2,3,5,6,8)]<-sapply(bedpe[,c(2,3,5,6,8)],function(x){as.numeric(as.character(x))})
   bedpe$chrom1<-factor(bedpe$chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
   bedpe$chrom2<-factor(bedpe$chrom2,levels=paste("chr",c(1:22,"X","Y"),sep=""))
   bedpe$length1<-bedpe$end1-bedpe$start1
@@ -121,9 +121,8 @@ inter_check<-function(events){
   #read-in bedpe data
   bedpe<-read.delim("C:/PhD/Rotations/Rotation_1/data/SV2/bedpe/combine/jointdf.bedpe",header = F)
   colnames(bedpe)<-c("chrom1","start1","end1","chrom2","start2","end2",
-                     "type","score","number1","number2","number3",
-                     "samples","Description")
-  bedpe[,c(2,3,5,6,8,9,10,11)]<-sapply(bedpe[,c(2,3,5,6,8,9,10,11)],function(x){as.numeric(as.character(x))})
+                     "type","score", "samples","Description")
+  bedpe[,c(2,3,5,6,8)]<-sapply(bedpe[,c(2,3,5,6,8)],function(x){as.numeric(as.character(x))})
   bedpe$chrom1<-factor(bedpe$chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
   bedpe$chrom2<-factor(bedpe$chrom2,levels=paste("chr",c(1:22,"X","Y"),sep=""))
   bedpe$length1<-bedpe$end1-bedpe$start1
@@ -160,9 +159,8 @@ inter_count<-function(events,resolution=1){
   #read-in bedpe data
   bedpe<-read.delim("C:/PhD/Rotations/Rotation_1/data/SV2/bedpe/combine/jointdf.bedpe",header = F)
   colnames(bedpe)<-c("Chrom1","start1","end1","Chrom2","start2","end2",
-                     "type","score","number1","number2","number3",
-                     "samples","Description")
-  bedpe[,c(2,3,5,6,8,9,10,11)]<-sapply(bedpe[,c(2,3,5,6,8,9,10,11)],function(x){as.numeric(as.character(x))})
+                     "type","score", "samples","Description")
+  bedpe[,c(2,3,5,6,8)]<-sapply(bedpe[,c(2,3,5,6,8)],function(x){as.numeric(as.character(x))})
   bedpe$Chrom1<-factor(bedpe$Chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
   bedpe$Chrom2<-factor(bedpe$Chrom2,levels=paste("chr",c(1:22,"X","Y"),sep=""))
   bedpe$length1<-bedpe$end1-bedpe$start1
