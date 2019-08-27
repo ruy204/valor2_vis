@@ -10,12 +10,54 @@ library(Gviz)
 library(gridExtra)
 library(Sushi)
 library(BioCircos)
+library(ggbio)
 
 # color extraction function
 f <- function(pal) brewer.pal(brewer.pal.info[pal, "maxcolors"], pal)
 
+################
+#   Overview   #
+################
+
+ethrank = c('Finnish','SOUTHERN HAN CHINESE','PUERTO RICAN','UTAH/MORMON','YORUBA/Nigeria','HAN CHINESE/China',
+            'JAPANESE/Japan','USA/MEXICAN','USA/AFRICAN','ITALY/TOSCANI','Caucasian')
+
+#bedpe file
+bedpe<-read.delim("C:/PhD/Rotations/Rotation_1/data/SV2/bedpe/combine/jointdf.bedpe",header = F)
+colnames(bedpe)<-c("chrom1","start1","end1","chrom2","start2","end2",
+                   "type","score", "samples","Description")
+bedpe[,c(2,3,5,6,8)]<-sapply(bedpe[,c(2,3,5,6,8)],function(x){as.numeric(as.character(x))})
+bedpe$chrom1<-factor(bedpe$chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+bedpe$chrom2<-factor(bedpe$chrom2,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+bedpe$Description<-factor(bedpe$Description,levels=ethrank)
+
+#chromosome preparation
+df1=as.data.frame(cbind(paste("chr",c(1:22,"X","Y"),sep=""),rep(1,24),
+                        c(249250621,243199373,198022430,191154276,180915260,171115067,159138663,146364022,141213431,135534747,
+                          135006516,133851895,115169878,107349540,102531392,90354753,81195210,78077248,59128983,63025520,
+                          48129895,51304566,155270560,59373566)))
+colnames(df1)<-c("Chrom1","start","end")
+df1$Chrom1<-factor(df1$Chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+df1$end<-as.numeric(as.character(df1$end))
+
+#group same event
+sub1<-bedpe #%>% dplyr::filter(type=="inverted-translocation")
+sub1$event<-paste("event",c(1:nrow(sub1)),sep="_")
+a<-sub1 %>% dplyr::select(samples,Description,event,score,type,chrom1:end1)
+b<-sub1 %>% dplyr::select(samples,Description,event,score,type,chrom2:end2)
+colnames(a)[6:8]<-colnames(b)[6:8]<-c("chrom","start","end")
+sub2<-bind_rows(a,b)
+
 bedpe %>% ggplot(aes(start1,Description,color=type))+geom_point(size=3)+
   theme_bw()+facet_wrap(~chrom1)+labs(title="General Overview")
+
+#overview version
+ggplot(data=df1,aes(Chrom1,end))+geom_bar(stat="identity",width = 0.2,alpha=0.5)+ylim(0,max(df1$end))+
+  theme_bw()+theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+  geom_point(data=sub2,aes(chrom,start,color=Description),size=3)+facet_wrap(~type)+
+  scale_color_brewer(palette = "Paired")+
+  geom_line(data=sub2,aes(chrom,start,group=event,color=Description))+
+  labs(title="General overview of events")
 
 #######################
 #   Basic Functions   #
