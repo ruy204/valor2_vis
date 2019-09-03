@@ -59,10 +59,10 @@ jointdf.to_csv("C:/PhD/Rotations/Rotation_1/data/SV2/bedpe/combine/jointdf.bedpe
 jointdf.head()
 
 
-# In[ ]:
+# In[5]:
 
 
-
+jointdf.samples.nunique()
 
 
 # In[ ]:

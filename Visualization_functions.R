@@ -93,7 +93,7 @@ alllocations<-function(){
   
   p<-bedpe %>% ggplot(aes(start1,Description,color=type))+geom_point(size=3)+
     theme_bw()+facet_wrap(~chrom1)+labs(title="General Overview")+
-    xlab(title="Chromosome Locations")+ylab("Populations")
+    xlab("Chromosome Locations")+ylab("Populations")
   print(p)
   
 }

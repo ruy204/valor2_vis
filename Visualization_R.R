@@ -389,17 +389,113 @@ intra_check_arch<-function(event="inverted-duplication",chromosome,start=0,end=2
   }
 }
 
-intra_check_dup(unique(bedpe$type),"chr22",start=18000000,end=24000000,colorby="type")
+intra_check_arch("inversion","chr22",start=18000000,end=22500000,colorby="Description",plot_type = "lines")
+intra_check_arch("inversion","chr22",start=18000000,end=22500000,colorby="Description",plot_type = "loops")
+intra_check_arch("duplication","chr16",start=65000000,end=75000000,colorby="Description")
+intra_check_arch("deletion","chr15",start=0,end=75000000,colorby="Description",plot_type = "lines")
+intra_check_arch(unique(bedpe$type),"chr22",start=18000000,end=24000000,colorby="type")
 
+#4. for inversion only 
 
+inversion<-function(chromosome,start=0,end=250000000){
+  
+  event="inversion"
+  
+  ethrank = c('Finnish','SOUTHERN HAN CHINESE','PUERTO RICAN','UTAH/MORMON','YORUBA/Nigeria','HAN CHINESE/China',
+              'JAPANESE/Japan','USA/MEXICAN','USA/AFRICAN','ITALY/TOSCANI','Caucasian')
+  
+  #read-in bedpe data
+  bedpe<-read.delim("C:/PhD/Rotations/Rotation_1/data/SV2/bedpe/combine/jointdf.bedpe",header = F)
+  colnames(bedpe)<-c("chrom1","start1","end1","chrom2","start2","end2",
+                     "type","score", "samples","Description")
+  bedpe[,c(2,3,5,6,8)]<-sapply(bedpe[,c(2,3,5,6,8)],function(x){as.numeric(as.character(x))})
+  bedpe$chrom1<-factor(bedpe$chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  bedpe$chrom2<-factor(bedpe$chrom2,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  bedpe$length1<-bedpe$end1-bedpe$start1
+  bedpe$length2<-bedpe$end2-bedpe$start2
+  bedpe$Description<-factor(bedpe$Description,levels=ethrank)
+  
+  #chromosome preparation
+  df1=as.data.frame(cbind(paste("chr",c(1:22,"X","Y"),sep=""),rep(1,24),
+                          c(249250621,243199373,198022430,191154276,180915260,171115067,159138663,146364022,141213431,135534747,
+                            135006516,133851895,115169878,107349540,102531392,90354753,81195210,78077248,59128983,63025520,
+                            48129895,51304566,155270560,59373566)))
+  colnames(df1)<-c("Chrom1","start","end")
+  df1$Chrom1<-factor(df1$Chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  df1$end<-as.numeric(as.character(df1$end))
+  
+  sub<-bedpe %>% dplyr::filter(chrom1==chromosome,type=="inversion")
+  sub<-sub %>% rowwise() %>% mutate(start=min(start1,end1),end=max(start2,end2)) %>% ungroup()
+  lower_bound<-max(start,dplyr::filter(df1,Chrom1==chromosome)$start,na.rm = TRUE)
+  upper_bound<-min(end,dplyr::filter(df1,Chrom1==chromosome)$end,na.rm = TRUE)
+  
+  p<-ggplot(sub, aes(y = start2, ymin = start1,x = Description, ymax = end2, group = paste(samples,start1),color=Description)) +
+    geom_point(position = position_dodge(.5),size=2) + geom_linerange(position = position_dodge(.5),size=1) +
+    coord_flip()+theme_bw()+scale_color_brewer(palette = "Paired")+scale_y_continuous(breaks=seq(lower_bound,upper_bound,10000000))+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))+ylim(lower_bound,upper_bound)+
+    labs(title=paste("Inversion events on Chromosome ",gsub("chr","",chromosome),", region ", floor(lower_bound/1000000),
+                     " to ", ceiling(upper_bound/1000000), " Mb",sep=""))+
+    ylab("Genomic Location")+xlab("Population")
+  print(p)
+  
+}
 
+inversion("chr1",start=149000000,end=150005000)
+inversion("chr7")
 
+#5. for duplication only
 
+duplication<-function(chromosome,start=0,end=250000000){
+  
+  event=c("duplication","inverted-duplication")
+  
+  ethrank = c('Finnish','SOUTHERN HAN CHINESE','PUERTO RICAN','UTAH/MORMON','YORUBA/Nigeria','HAN CHINESE/China',
+              'JAPANESE/Japan','USA/MEXICAN','USA/AFRICAN','ITALY/TOSCANI','Caucasian')
+  
+  #read-in bedpe data
+  bedpe<-read.delim("C:/PhD/Rotations/Rotation_1/data/SV2/bedpe/combine/jointdf.bedpe",header = F)
+  colnames(bedpe)<-c("chrom1","start1","end1","chrom2","start2","end2",
+                     "type","score", "samples","Description")
+  bedpe[,c(2,3,5,6,8)]<-sapply(bedpe[,c(2,3,5,6,8)],function(x){as.numeric(as.character(x))})
+  bedpe$chrom1<-factor(bedpe$chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  bedpe$chrom2<-factor(bedpe$chrom2,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  bedpe$length1<-bedpe$end1-bedpe$start1
+  bedpe$length2<-bedpe$end2-bedpe$start2
+  bedpe$Description<-factor(bedpe$Description,levels=ethrank)
+  
+  #chromosome preparation
+  df1=as.data.frame(cbind(paste("chr",c(1:22,"X","Y"),sep=""),rep(1,24),
+                          c(249250621,243199373,198022430,191154276,180915260,171115067,159138663,146364022,141213431,135534747,
+                            135006516,133851895,115169878,107349540,102531392,90354753,81195210,78077248,59128983,63025520,
+                            48129895,51304566,155270560,59373566)))
+  colnames(df1)<-c("Chrom1","start","end")
+  df1$Chrom1<-factor(df1$Chrom1,levels=paste("chr",c(1:22,"X","Y"),sep=""))
+  df1$end<-as.numeric(as.character(df1$end))
+  
+  sub<-bedpe %>% dplyr::filter(chrom1==chromosome,type %in% event)
+  sub<-sub %>% rowwise() %>% mutate(start=mean(start1,end1),end=mean(start2,end2)) %>% ungroup()
+  lower_bound<-max(start,dplyr::filter(df1,Chrom1==chromosome)$start,na.rm = TRUE)
+  upper_bound<-min(end,dplyr::filter(df1,Chrom1==chromosome)$end,na.rm = TRUE)
+  
+  geom_curve(aes(x = x1, y = y1, xend = x2, yend = y2, colour = "curve"), data = df)
+  ggplot(sub,aes())
+  
+  p<-ggplot(sub, aes(y = start1, ymin = start1,x = Description, ymax = end1, group = paste(samples,start1),color=type)) +
+    geom_point(position = position_dodge(.2),size=2) + geom_linerange(position = position_dodge(.2),size=1)+
+    geom_point(aes(y=start2,ymin=start2,ymax=end2),position = position_dodge(.2),size=2) + 
+    geom_linerange(aes(y=start2,ymin=start2,ymax=end2),position = position_dodge(.2),size=1)+
+    geom_curve(aes(x = Description,y=start,xend=Description,yend=end),arrow = arrow(length = unit(0.02, "npc")),curvature = -0.2,size=1.5)+
+    coord_flip()+theme_bw()+scale_color_brewer(palette = "Set1")+scale_y_continuous(breaks=seq(lower_bound,upper_bound,10000000))+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))+ylim(lower_bound,upper_bound)+
+    labs(title=paste("Duplication events on Chromosome ",gsub("chr","",chromosome),", region ", floor(lower_bound/1000000),
+                     " to ", ceiling(upper_bound/1000000), " Mb",sep=""))+
+    ylab("Genomic Location")+xlab("Population")
+  print(p)
+  
+}
 
-
-
-
-
+# duplication("chr3",126000000,127000000)
+# duplication("chr16")
 
 
 
